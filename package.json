@@ -1,0 +1,13 @@
+{
+  "name": "docs-site",
+  "version": "1.0.0",
+  "description": "doc",
+  "main": "index.js",
+  "scripts": {
+    "deploy": "./deploy.sh",
+    "docs:dev": "vuepress dev docs",
+    "docs:build": "vuepress build docs"
+  },
+  "author": "",
+  "license": "ISC"
+}
