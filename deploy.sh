@@ -14,10 +14,9 @@ touch .nojekyll
 
 git init
 git add -A
-git commit -m 'deploy'
+git commit -m 'update'
 
 # 如果发布到 https://<USERNAME>.github.io/<REPO>
-git push -f "https://${access_token}@github.com/theaoe/docs-site.git" master:gh-pages
-
+git push -f "git@github.com:theaoe/docs-site.git" master:gh-pages
 
 cd -
