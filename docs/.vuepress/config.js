@@ -19,7 +19,7 @@ module.exports = {
   themeConfig: {
     logo: '/logo.jpg',
     nav: require('./navbar.js'), //顶部导航栏
-    sidebar: 'auto',
+    sidebar: require('./sidebar.js'),
     lastUpdated: 'Last Updated', // string | boolean
     serviceWorker: {
       updatePopup: {

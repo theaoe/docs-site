@@ -3,3 +3,13 @@
 .theme-container .custom-page-class {
   /* 特定页面的 CSS */
 }
+div[class*="language-"].line-numbers-mode .line-numbers-wrapper,{
+  width: 0rem;
+  display:none;
+}
+div[class*="language-"].line-numbers-mode::after {
+  display:none;
+}
+div[class*="language-"].line-numbers-mode pre {
+  padding: 1.25rem 1.5rem;
+}
