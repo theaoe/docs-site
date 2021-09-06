@@ -347,11 +347,564 @@ $('#result').append(
   '</em> are on sale!'
 );
 ```
+上面这种写法相当繁琐不方便，ES6引入了模板字符串解决这个问题。
+
+```js
+$('#result').append(`
+  There are <b>${basket.count}</b> items
+   in your basket, <em>${basket.onSale}</em>
+  are on sale!
+`);
+```
+模板字符串（template string）是增强版的字符串，用反引号（`）标识。它可以当作普通字符串使用，也可以用来定义多行字符串，或者在字符串中嵌入变量。
+
+```js
+// 普通字符串
+`In JavaScript '\n' is a line-feed.`
+
+// 多行字符串
+`In JavaScript this is
+ not legal.`
+
+console.log(`string text line 1
+string text line 2`);
+
+// 字符串中嵌入变量
+var name = "Bob", time = "today";
+`Hello ${name}, how are you ${time}?`
+```
+上面代码中的模板字符串，都是用反引号表示。如果在模板字符串中需要使用反引号，则前面要用反斜杠转义。
+
+```js
+var greeting = `\`Yo\` World!`;
+```
+如果使用模板字符串表示多行字符串，所有的空格和缩进都会被保留在输出之中。
+
+```js
+$('#list').html(`
+<ul>
+  <li>first</li>
+  <li>second</li>
+</ul>
+`);
+```
+上面代码中，所有模板字符串的空格和换行，都是被保留的，比如`<ul>`标签前面会有一个换行。如果你不想要这个换行，可以使用`trim`方法消除它。
+
+```js
+$('#list').html(`
+<ul>
+  <li>first</li>
+  <li>second</li>
+</ul>
+`.trim());
+```
+模板字符串中嵌入变量，需要将变量名写在`${}`之中。
+```js
+function authorize(user, action) {
+  if (!user.hasPrivilege(action)) {
+    throw new Error(
+      // 传统写法为
+      // 'User '
+      // + user.name
+      // + ' is not authorized to do '
+      // + action
+      // + '.'
+      `User ${user.name} is not authorized to do ${action}.`);
+  }
+}
+```
+
+大括号内部可以放入任意的JavaScript表达式，可以进行运算，以及引用对象属性。
+
+```js
+var x = 1;
+var y = 2;
+
+`${x} + ${y} = ${x + y}`
+// "1 + 2 = 3"
+
+`${x} + ${y * 2} = ${x + y * 2}`
+// "1 + 4 = 5"
+
+var obj = {x: 1, y: 2};
+`${obj.x + obj.y}`
+// 3
+```
+模板字符串之中还能调用函数。
+
+```js
+function fn() {
+  return "Hello World";
+}
+
+`foo ${fn()} bar`
+// foo Hello World bar
+```
+如果大括号中的值不是字符串，将按照一般的规则转为字符串。比如，大括号中是一个对象，将默认调用对象的`toString`方法。
+
+::: warning 注意
+如果模板字符串中的变量没有声明，将报错。
+:::
+
+```js
+// 变量place没有声明
+var msg = `Hello, ${place}`;
+// 报错
+```
+由于模板字符串的大括号内部，就是执行JavaScript代码，因此如果大括号内部是一个字符串，将会原样输出。
+```js
+`Hello ${'World'}`
+// "Hello World"
+```
+模板字符串甚至还能嵌套。
+
+```js
+const tmpl = addrs => `
+  <table>
+  ${addrs.map(addr => `
+    <tr><td>${addr.first}</td></tr>
+    <tr><td>${addr.last}</td></tr>
+  `).join('')}
+  </table>
+`;
+```
+上面代码中，模板字符串的变量之中，又嵌入了另一个模板字符串，使用方法如下。
+
+```js
+const data = [
+    { first: '<Jane>', last: 'Bond' },
+    { first: 'Lars', last: '<Croft>' },
+];
+
+console.log(tmpl(data));
+// <table>
+//
+//   <tr><td><Jane></td></tr>
+//   <tr><td>Bond</td></tr>
+//
+//   <tr><td>Lars</td></tr>
+//   <tr><td><Croft></td></tr>
+//
+// </table>
+```
+如果需要引用模板字符串本身，在需要时执行，可以像下面这样写。
+
+```js
+// 写法一
+let str = 'return ' + '`Hello ${name}!`';
+let func = new Function('name', str);
+func('Jack') // "Hello Jack!"
+
+// 写法二
+let str = '(name) => `Hello ${name}!`';
+let func = eval.call(null, str);
+func('Jack') // "Hello Jack!"
+```
 
 ## 4.11 实例：模板编译
 
+下面，我们来看一个通过模板字符串，生成正式模板的实例。
+
+```js
+var template = `
+<ul>
+  <% for(var i = 0; i< data.supplies.length;i++) { %>
+    <li><%= data.supplies[i] %></li>
+  <% } %>
+</ul>
+`;
+```
+
+上面代码在模板字符串之中，放置了一个常规模板。该模板使用`<%...%>`放置JavaScript代码，使用`<%= ... %>`输出JavaScript表达式。
+
+怎么编译这个模板字符串呢？
+
+一种思路是将其转换为JavaScript表达式字符串。
+
+```js
+echo('<ul>');
+for(var i=0; i < data.supplies.length; i++) {
+  echo('<li>');
+  echo(data.supplies[i]);
+  echo('</li>');
+};
+echo('</ul>');
+```
+
+这个转换使用正则表达式就行了。
+
+```js
+var evalExpr = /<%=(.+?)%>/g;
+var expr = /<%([\s\S]+?)%>/g;
+
+template = template
+  .replace(evalExpr, '`); \n  echo( $1 ); \n  echo(`')
+  .replace(expr, '`); \n $1 \n  echo(`');
+
+template = 'echo(`' + template + '`);';
+```
+
+然后，将`template`封装在一个函数里面返回，就可以了。
+
+```js
+var script =
+`(function parse(data){
+  var output = "";
+
+  function echo(html){
+    output += html;
+  }
+
+  ${ template }
+
+  return output;
+})`;
+
+return script;
+```
+
+将上面的内容拼装成一个模板编译函数`compile`。
+
+```js
+function compile(template){
+  var evalExpr = /<%=(.+?)%>/g;
+  var expr = /<%([\s\S]+?)%>/g;
+
+  template = template
+    .replace(evalExpr, '`); \n  echo( $1 ); \n  echo(`')
+    .replace(expr, '`); \n $1 \n  echo(`');
+
+  template = 'echo(`' + template + '`);';
+
+  var script =
+  `(function parse(data){
+    var output = "";
+
+    function echo(html){
+      output += html;
+    }
+
+    ${ template }
+
+    return output;
+  })`;
+
+  return script;
+}
+```
+
+`compile`函数的用法如下。
+
+```js
+var parse = eval(compile(template));
+div.innerHTML = parse({ supplies: [ "broom", "mop", "cleaner" ] });
+//   <ul>
+//     <li>broom</li>
+//     <li>mop</li>
+//     <li>cleaner</li>
+//   </ul>
+```
+
 ## 4.12 标签模板
+
+模板字符串的功能，不仅仅是上面这些。它可以紧跟在一个函数名后面，该函数将被调用来处理这个模板字符串。这被称为“标签模板”功能（tagged template）。
+
+```js
+alert`123`
+// 等同于
+alert(123)
+```
+
+标签模板其实不是模板，而是函数调用的一种特殊形式。“标签”指的就是函数，紧跟在后面的模板字符串就是它的参数。
+
+但是，如果模板字符里面有变量，就不是简单的调用了，而是会将模板字符串先处理成多个参数，再调用函数。
+
+```js
+var a = 5;
+var b = 10;
+
+tag`Hello ${ a + b } world ${ a * b }`;
+// 等同于
+tag(['Hello ', ' world ', ''], 15, 50);
+```
+
+上面代码中，模板字符串前面有一个标识名`tag`，它是一个函数。整个表达式的返回值，就是`tag`函数处理模板字符串后的返回值。
+
+函数`tag`依次会接收到多个参数。
+
+```js
+function tag(stringArr, value1, value2){
+  // ...
+}
+
+// 等同于
+
+function tag(stringArr, ...values){
+  // ...
+}
+```
+
+`tag`函数的第一个参数是一个数组，该数组的成员是模板字符串中那些没有变量替换的部分，也就是说，变量替换只发生在数组的第一个成员与第二个成员之间、第二个成员与第三个成员之间，以此类推。
+
+`tag`函数的其他参数，都是模板字符串各个变量被替换后的值。由于本例中，模板字符串含有两个变量，因此`tag`会接受到value1和value2两个参数。
+
+`tag`函数所有参数的实际值如下。
+
+- 第一个参数：['Hello ', ' world ', '']
+- 第二个参数: 15
+- 第三个参数：50
+
+也就是说，`tag`函数实际上以下面的形式调用。
+
+我们可以按照需要编写`tag`函数的代码。下面是`tag`函数的一种写法，以及运行结果。
+
+```js
+var a = 5;
+var b = 10;
+
+function tag(s, v1, v2) {
+  console.log(s[0]);
+  console.log(s[1]);
+  console.log(s[2]);
+  console.log(v1);
+  console.log(v2);
+
+  return "OK";
+}
+
+tag`Hello ${ a + b } world ${ a * b}`;
+// "Hello "
+// " world "
+// ""
+// 15
+// 50
+// "OK"
+```
+
+下面是一个更复杂的例子。
+
+```js
+var total = 30;
+var msg = passthru`The total is ${total} (${total*1.05} with tax)`;
+
+function passthru(literals) {
+  var result = '';
+  var i = 0;
+
+  while (i < literals.length) {
+    result += literals[i++];
+    if (i < arguments.length) {
+      result += arguments[i];
+    }
+  }
+
+  return result;
+}
+
+msg // "The total is 30 (31.5 with tax)"
+```
+上面这个例子展示了，如何将各个参数按照原来的位置拼合回去。
+
+`passthru`函数采用rest参数的写法如下。
+
+```js
+function passthru(literals, ...values) {
+  var output = "";
+  for (var index = 0; index < values.length; index++) {
+    output += literals[index] + values[index];
+  }
+
+  output += literals[index]
+  return output;
+}
+```
+“标签模板”的一个重要应用，就是过滤HTML字符串，防止用户输入恶意内容。
+
+```js
+var message =
+  SaferHTML`<p>${sender} has sent you a message.</p>`;
+
+function SaferHTML(templateData) {
+  var s = templateData[0];
+  for (var i = 1; i < arguments.length; i++) {
+    var arg = String(arguments[i]);
+
+    // Escape special characters in the substitution.
+    s += arg.replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;");
+
+    // Don't escape special characters in the template.
+    s += templateData[i];
+  }
+  return s;
+}
+```
+上面代码中，`sender`变量往往是用户提供的，经过`SaferHTML`函数处理，里面的特殊字符都会被转义。
+
+```js
+var sender = '<script>alert("abc")</script>'; // 恶意代码
+var message = SaferHTML`<p>${sender} has sent you a message.</p>`;
+
+message
+// <p>&lt;script&gt;alert("abc")&lt;/script&gt; has sent you a message.</p>
+```
+
+标签模板的另一个应用，就是多语言转换（国际化处理）。
+
+```js
+i18n`Welcome to ${siteName}, you are visitor number ${visitorNumber}!`
+// "欢迎访问xxx，您是第xxxx位访问者！"
+```
+模板字符串本身并不能取代Mustache之类的模板库，因为没有条件判断和循环处理功能，但是通过标签函数，你可以自己添加这些功能。
+
+```js
+// 下面的hashTemplate函数
+// 是一个自定义的模板处理函数
+var libraryHtml = hashTemplate`
+  <ul>
+    #for book in ${myBooks}
+      <li><i>#{book.title}</i> by #{book.author}</li>
+    #end
+  </ul>
+`;
+```
+
+除此之外，你甚至可以使用标签模板，在JavaScript语言之中嵌入其他语言。
+
+```js
+jsx`
+  <div>
+    <input
+      ref='input'
+      onChange='${this.handleChange}'
+      defaultValue='${this.state.value}' />
+      ${this.state.value}
+   </div>
+`
+```
+上面的代码通过jsx函数，将一个DOM字符串转为React对象。你可以在Github找到 [jsx函数的具体实现](https://gist.github.com/lygaret/a68220defa69174bdec5)。
+
+下面则是一个假想的例子，通过`java`函数，在JavaScript代码之中运行Java代码。
+
+```js
+java`
+class HelloWorldApp {
+  public static void main(String[] args) {
+    System.out.println(“Hello World!”); // Display the string.
+  }
+}
+`
+HelloWorldApp.main();
+```
+模板处理函数的第一个参数（模板字符串数组），还有一个`raw`属性。
+
+```js
+console.log`123`
+// ["123", raw: Array[1]]
+```
+上面代码中，`console.log`接受的参数，实际上是一个数组。该数组有一个raw属性，保存的是转义后的原字符串。
+
+请看下面的例子：
+
+```js
+tag`First line\nSecond line`
+
+function tag(strings) {
+  console.log(strings.raw[0]);
+  // "First line\\nSecond line"
+}
+```
+
+上面代码中，tag函数的第一个参数`strings`，有一个raw属性，也指向一个数组。该数组的成员与`strings`数组完全一致。比如，`strings`数组是["First line\nSecond line"]，那么`strings.raw`数组就是`["First line\\nSecond line"]`。两者唯一的区别，就是字符串里面的斜杠都被转义了。比如，`strings.raw`数组会将`\n`视为`\\`和`n`两个字符，而不是换行符。这是为了方便取得转义之前的原始模板而设计的。
 
 ## 4.13 String.raw()
 
+ES6还为原生的String对象，提供了一个`raw`方法。
+
+`String.raw`方法，往往用来充当模板字符串的处理函数，返回一个斜杠都被转义（即斜杠前面再加一个斜杠）的字符串，对应于替换变量后的模板字符串。
+
+```js
+String.raw`Hi\n${2+3}!`;
+// "Hi\\n5!"
+
+String.raw`Hi\u000A!`;
+// 'Hi\\u000A!'
+```
+
+如果原字符串的斜杠已经转义，那么String.raw不会做任何处理。
+
+```js
+String.raw`Hi\\n`
+// "Hi\\n"
+```
+
+`String.raw`的代码基本如下。
+
+```js
+String.raw = function (strings, ...values) {
+  var output = "";
+  for (var index = 0; index < values.length; index++) {
+    output += strings.raw[index] + values[index];
+  }
+
+  output += strings.raw[index]
+  return output;
+}
+```
+
+`String.raw`方法可以作为处理模板字符串的基本方法，它会将所有变量替换，而且对斜杠进行转义，方便下一步作为字符串来使用。
+
+`String.raw`方法也可以作为正常的函数使用。这时，它的第一个参数，应该是一个具有`raw`属性的对象，且`raw`属性的值应该是一个数组。
+
+```js
+String.raw({ raw: 'test' }, 0, 1, 2);
+// 't0e1s2t'
+
+// 等同于
+String.raw({ raw: ['t','e','s','t'] }, 0, 1, 2);
+```
+
 ## 4.14 模板字符串的限制
+
+前面提到标签模板里面，可以内嵌其他语言。但是，模板字符串默认会将字符串转义，因此导致了无法嵌入其他语言。
+
+举例来说，在标签模板里面可以嵌入Latex语言。
+
+```js
+function latex(strings) {
+  // ...
+}
+
+let document = latex`
+\newcommand{\fun}{\textbf{Fun!}}  // 正常工作
+\newcommand{\unicode}{\textbf{Unicode!}} // 报错
+\newcommand{\xerxes}{\textbf{King!}} // 报错
+
+Breve over the h goes \u{h}ere // 报错
+`
+```
+
+上面代码中，变量`document`内嵌的模板字符串，对于Latex语言来说完全是合法的，但是JavaScript引擎会报错。原因就在于字符串的转义。
+
+模板字符串会将`\u00FF`和`\u{42}`当作Unicode字符进行转义，所以`\unicode`解析时报错；而\x56会被当作十六进制字符串转义，所以`\xerxes`会报错。
+
+为了解决这个问题，现在有一个 [提案](https://tc39.github.io/proposal-template-literal-revision/)，放松对标签模板里面的字符串转义的限制。如果遇到不合法的字符串转义，就返回`undefined`，而不是报错，并且从`raw`属性上面可以得到原始字符串。
+
+```js
+function tag(strs) {
+  strs[0] === undefined
+  strs.raw[0] === "\\unicode and \\u{55}";
+}
+tag`\unicode and \u{55}`
+```
+
+上面代码中，模板字符串原本是应该报错的，但是由于放松了对字符串转义的限制，所以不报错了，JavaScript引擎将第一个字符设置为`undefined`，但是`raw`属性依然可以得到原始字符串，因此`tag`函数还是可以对原字符串进行处理。
+
+::: warning 注意
+这种对字符串转义的放松，只在标签模板解析字符串时生效，不是标签模板的场合，依然会报错。
+:::
+
+```js
+let bad = `bad escape sequence: \unicode`; // 报错
+```
