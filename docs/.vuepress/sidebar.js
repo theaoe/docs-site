@@ -8,6 +8,7 @@ module.exports = [{
     '/guide/ecma/assignment.md',
     '/guide/ecma/string.md',
     '/guide/ecma/regular.md',
-    '/guide/ecma/numerical.md'
+    '/guide/ecma/numerical.md',
+    '/guide/ecma/function.md'
   ]
 }]
