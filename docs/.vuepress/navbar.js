@@ -1,7 +1,10 @@
 module.exports = [{
   text: 'ES6入门',
   link: '/guide/'
-}, ]
+}, {
+  text: '前端工程化',
+  link: '/engineering/'
+}]
 
 
 // {
