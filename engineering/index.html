@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>一、Git commit 规范 | theaoe</title>
+    <meta name="generator" content="VuePress 1.8.2">
+    <link rel="icon" href="/docs-site/logo.png">
+    <link rel="stylesheet" href="/docs-site/css/style.css">
+    <meta name="description" content="Weclome my friend">
+    
+    <link rel="preload" href="/docs-site/assets/css/0.styles.b9040e75.css" as="style"><link rel="preload" href="/docs-site/assets/js/app.9e22c575.js" as="script"><link rel="preload" href="/docs-site/assets/js/2.ad40f37e.js" as="script"><link rel="preload" href="/docs-site/assets/js/8.a1159853.js" as="script"><link rel="prefetch" href="/docs-site/assets/js/10.eddfd84a.js"><link rel="prefetch" href="/docs-site/assets/js/11.fcd98c99.js"><link rel="prefetch" href="/docs-site/assets/js/12.a45f2495.js"><link rel="prefetch" href="/docs-site/assets/js/13.c060eb24.js"><link rel="prefetch" href="/docs-site/assets/js/14.8e1fa456.js"><link rel="prefetch" href="/docs-site/assets/js/15.c93891cc.js"><link rel="prefetch" href="/docs-site/assets/js/16.ae578209.js"><link rel="prefetch" href="/docs-site/assets/js/17.14918a37.js"><link rel="prefetch" href="/docs-site/assets/js/3.8151d962.js"><link rel="prefetch" href="/docs-site/assets/js/4.4dd49430.js"><link rel="prefetch" href="/docs-site/assets/js/5.f57b557f.js"><link rel="prefetch" href="/docs-site/assets/js/6.2234959b.js"><link rel="prefetch" href="/docs-site/assets/js/7.a5c61512.js"><link rel="prefetch" href="/docs-site/assets/js/9.408ed747.js">
+    <link rel="stylesheet" href="/docs-site/assets/css/0.styles.b9040e75.css">
+  </head>
+  <body>
+    <div id="app" data-server-rendered="true"><div class="theme-container"><header class="navbar"><div class="sidebar-button"><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" role="img" viewBox="0 0 448 512" class="icon"><path fill="currentColor" d="M436 124H12c-6.627 0-12-5.373-12-12V80c0-6.627 5.373-12 12-12h424c6.627 0 12 5.373 12 12v32c0 6.627-5.373 12-12 12zm0 160H12c-6.627 0-12-5.373-12-12v-32c0-6.627 5.373-12 12-12h424c6.627 0 12 5.373 12 12v32c0 6.627-5.373 12-12 12zm0 160H12c-6.627 0-12-5.373-12-12v-32c0-6.627 5.373-12 12-12h424c6.627 0 12 5.373 12 12v32c0 6.627-5.373 12-12 12z"></path></svg></div> <a href="/docs-site/" class="home-link router-link-active"><img src="/docs-site/logo.jpg" alt="theaoe" class="logo"> <span class="site-name can-hide">theaoe</span></a> <div class="links"><div class="search-box"><input aria-label="Search" autocomplete="off" spellcheck="false" value=""> <!----></div> <nav class="nav-links can-hide"><div class="nav-item"><a href="/docs-site/guide/" class="nav-link">
+  ES6入门
+</a></div><div class="nav-item"><a href="/docs-site/engineering/" aria-current="page" class="nav-link router-link-exact-active router-link-active">
+  前端工程化
+</a></div> <!----></nav></div></header> <div class="sidebar-mask"></div> <aside class="sidebar"><nav class="nav-links"><div class="nav-item"><a href="/docs-site/guide/" class="nav-link">
+  ES6入门
+</a></div><div class="nav-item"><a href="/docs-site/engineering/" aria-current="page" class="nav-link router-link-exact-active router-link-active">
+  前端工程化
+</a></div> <!----></nav>  <ul class="sidebar-links"><li><section class="sidebar-group depth-0"><p class="sidebar-heading open"><span>Git commit 规范</span> <!----></p> <ul class="sidebar-links sidebar-group-items"><li><a href="/docs-site/engineering/" aria-current="page" class="active sidebar-link">一、Git commit 规范</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/docs-site/engineering/#概述" class="sidebar-link">概述</a></li><li class="sidebar-sub-header"><a href="/docs-site/engineering/#目的" class="sidebar-link">目的</a></li><li class="sidebar-sub-header"><a href="/docs-site/engineering/#type" class="sidebar-link">type</a></li></ul></li></ul></section></li></ul> </aside> <main class="page"> <div class="theme-default-content content__default"><h1 id="一、git-commit-规范"><a href="#一、git-commit-规范" class="header-anchor">#</a> 一、Git commit 规范</h1> <h2 id="概述"><a href="#概述" class="header-anchor">#</a> 概述</h2> <ul><li><code>Git</code>是现在市面上最流行的版本控制工具，我们在每次提交代码时，都需要编写<code>Commit Message</code>，否则是不允许提交的。</li> <li>书写良好的<code>Commit Message</code>能大大提高代码维护的效率。避免开发人员在项目中张扬个性，搞得代码一团糟。</li> <li>不管是开发还是日后维护，都将是灾难。因此，编写<code>Commit Message</code>需要遵循一定的范式，内容应该清晰明了，指明本次提交的目的，便于日后追踪问题。</li> <li>但是在日常开发中由于缺少对<code>Commit Message</code>的约束，导致填写内容随意、质量参差不齐，可读性低亦难以维护。</li> <li>一起来学习下<code>Commit Message</code>约束，希望对大家的工作有所帮助。</li></ul> <h2 id="目的"><a href="#目的" class="header-anchor">#</a> 目的</h2> <ul><li>统一团队 Git commit 日志标准，便于后续代码 review，版本发布以及日志自动化生成等等。</li> <li>统一团队的 Git 工作流，包括分支使用、tag 规范、issue 等。</li> <li>提供更多的信息，方便排查与回退。</li> <li>过滤关键字，迅速定位。</li> <li>方便生成文档。</li></ul> <h2 id="type"><a href="#type" class="header-anchor">#</a> type</h2> <div class="language- line-numbers-mode"><pre class="language-text"><code>/**
+ * feat：新增功能
+ * fix/to：修复bug，可以是QA发现的BUG，也可以是研发自己发现的BUG。
+    - fix：产生diff并自动修复此问题。适合于一次提交直接修复问题 
+    - to：只产生diff不自动修复此问题。适合于多次提交。最终修复问题提交时使用fix
+ * docs：文档更新
+ * style：不影响程序逻辑的代码修改(修改空白字符，格式缩进，补全缺失的分号等，没有改变代码逻辑)
+ * refactor：重构代码(既没有新增功能，也没有修复 bug)
+ * perf：性能, 体验优化
+ * test：新增测试用例或是更新现有测试
+ * build：主要目的是修改项目构建系统(例如 glup，webpack，rollup 的配置等)的提交
+ * ci：主要目的是修改项目继续集成流程(例如 Travis，Jenkins，GitLab CI，Circle等)的提交
+ * chore：不属于以上类型的其他类型，比如构建流程, 依赖管理
+ * revert：回滚某个更早之前的提交
+ * merge：代码合并
+ * sync：同步主线或分支的Bug
+*
+</code></pre> <div class="line-numbers-wrapper"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br><span class="line-number">4</span><br><span class="line-number">5</span><br><span class="line-number">6</span><br><span class="line-number">7</span><br><span class="line-number">8</span><br><span class="line-number">9</span><br><span class="line-number">10</span><br><span class="line-number">11</span><br><span class="line-number">12</span><br><span class="line-number">13</span><br><span class="line-number">14</span><br><span class="line-number">15</span><br><span class="line-number">16</span><br><span class="line-number">17</span><br></div></div></div> <footer class="page-edit"><!----> <div class="last-updated"><span class="prefix">Last Updated:</span> <span class="time">9/8/2021, 1:48:29 PM</span></div></footer> <!----> </main></div><div class="global-ui"></div></div>
+    <script src="/docs-site/assets/js/app.9e22c575.js" defer></script><script src="/docs-site/assets/js/2.ad40f37e.js" defer></script><script src="/docs-site/assets/js/8.a1159853.js" defer></script>
+  </body>
+</html>
