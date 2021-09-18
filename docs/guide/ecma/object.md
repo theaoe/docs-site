@@ -1,6 +1,6 @@
 # 9、对象的扩展
 
-## 9.1 属性的简洁表示法
+## 9.1、属性的简洁表示法
 
 ES6允许直接写入变量和函数，作为对象的属性和方法。这样的书写更加简洁。
 
@@ -151,7 +151,7 @@ var obj = {
 };
 ```
 
-## 9.2 属性名表达式
+## 9.2、属性名表达式
 
 JavaScript语言定义对象的属性，有两种方法。
 
@@ -243,7 +243,7 @@ myObject // Object {[object Object]: "valueB"}
 
 上面代码中，`[keyA]`和`[keyB]`得到的都是`[object Object]`，所以`[keyB]`会把`[keyA]`覆盖掉，而`myObject`最后只有一个`[object Object]`属性。
 
-## 9.3 方法的name属性
+## 9.3、方法的name属性
 
 函数的`name`属性，返回函数名。对象方法也是函数，因此也有`name`属性。
 
@@ -288,288 +288,308 @@ obj[key2].name // ""
 ```
 上面代码中，key1对应的Symbol值有描述，key2没有。
 
-## 9.4 Object.is()
 
-ES5比较两个值是否相等，只有两个运算符：相等运算符（`==`）和严格相等运算符（`===`）。它们都有缺点，前者会自动转换数据类型，后者的NaN不等于自身，以及+0等于-0。JavaScript缺乏一种运算，在所有环境中，只要两个值是一样的，它们就应该相等。
+## 9.4、属性的可枚举性
 
-ES6提出“Same-value equality”（同值相等）算法，用来解决这个问题。`Object.is`就是部署这个算法的新方法。它用来比较两个值是否严格相等，与严格比较运算符（===）的行为基本一致。
+对象的每个属性都有一个描述对象（Descriptor），用来控制该属性的行为。`Object.getOwnPropertyDescriptor`方法可以获取该属性的描述对象。
 
 ```js
-Object.is('foo', 'foo')
-// true
-Object.is({}, {})
+let obj = { foo: 123 };
+Object.getOwnPropertyDescriptor(obj, 'foo')
+//  {
+//    value: 123,
+//    writable: true,
+//    enumerable: true,
+//    configurable: true
+//  }
+```
+描述对象的`enumerable`属性，称为”可枚举性“，如果该属性为`false`，就表示某些操作会忽略当前属性。
+
+ES5有三个操作会忽略`enumerable`为`false`的属性。
+
+- for...in循环：只遍历对象自身的和继承的可枚举的属性
+- Object.keys()：返回对象自身的所有可枚举的属性的键名
+- JSON.stringify()：只串行化对象自身的可枚举的属性
+
+ES6新增了一个操作`Object.assign()`，会忽略`enumerable`为`false`的属性，只拷贝对象自身的可枚举的属性。
+
+这四个操作之中，只有`for...in`会返回继承的属性。实际上，引入`enumerable`的最初目的，就是让某些属性可以规避掉`for...in`操作。比如，对象原型的`toString`方法，以及数组的`length`属性，就通过这种手段，不会被`for...in`遍历到。
+
+```js
+Object.getOwnPropertyDescriptor(Object.prototype, 'toString').enumerable
+// false
+
+Object.getOwnPropertyDescriptor([], 'length').enumerable
 // false
 ```
 
-不同之处只有两个：一是`+0`不等于`-0`，二是`NaN`等于自身。
+上面代码中，`toString`和`length`属性的`enumerable`都是`false`，因此`for...in`不会遍历到这两个继承自原型的属性。
+
+另外，ES6规定，所有Class的原型的方法都是不可枚举的。
 
 ```js
-+0 === -0 //true
-NaN === NaN // false
-
-Object.is(+0, -0) // false
-Object.is(NaN, NaN) // true.
+Object.getOwnPropertyDescriptor(class {foo() {}}.prototype, 'foo').enumerable
+// false
 ```
 
-ES5可以通过下面的代码，部署`Object.is`。
+总的来说，操作中引入继承的属性会让问题复杂化，大多数时候，我们只关心对象自身的属性。所以，尽量不要用`for...in`循环，而用`Object.keys()`代替。
+
+## 9.5、属性的遍历
+
+ES6一共有5种方法可以遍历对象的属性。
+
+#### （1）for...in
+
+`for...in`循环遍历对象自身的和继承的可枚举属性（不含Symbol属性）。
+
+#### （2）Object.keys(obj)
+
+`Object.keys`返回一个数组，包括对象自身的（不含继承的）所有可枚举属性（不含Symbol属性）。
+
+#### （3）Object.getOwnPropertyNames(obj)
+
+`Object.getOwnPropertyNames`返回一个数组，包含对象自身的所有属性（不含Symbol属性，但是包括不可枚举属性）。
+
+#### （4）Object.getOwnPropertySymbols(obj)
+
+`Object.getOwnPropertySymbols`返回一个数组，包含对象自身的所有Symbol属性。
+
+#### （5）Reflect.ownKeys(obj)
+
+`Reflect.ownKeys`返回一个数组，包含对象自身的所有属性，不管是属性名是Symbol或字符串，也不管是否可枚举。
+
+以上的5种方法遍历对象的属性，都遵守同样的属性遍历的次序规则。
+
+- 首先遍历所有属性名为数值的属性，按照数字排序。
+- 其次遍历所有属性名为字符串的属性，按照生成时间排序。
+- 最后遍历所有属性名为Symbol值的属性，按照生成时间排序。
 
 ```js
-Object.defineProperty(Object, 'is', {
-  value: function(x, y) {
-    if (x === y) {
-      // 针对+0 不等于 -0的情况
-      return x !== 0 || 1 / x === 1 / y;
+Reflect.ownKeys({ [Symbol()]:0, b:0, 10:0, 2:0, a:0 })
+// ['2', '10', 'b', 'a', Symbol()]
+```
+
+上面代码中，`Reflect.ownKeys`方法返回一个数组，包含了参数对象的所有属性。这个数组的属性次序是这样的，首先是数值属性`2`和`10`，其次是字符串属性`b`和`a`，最后是Symbol属性。
+
+## 9.6、super关键字
+
+我们知道，`this`关键字总是指向函数所在的当前对象，ES6 又新增了另一个类似的关键字`super`，指向当前对象的原型对象。
+
+```js
+const proto = {
+  foo: 'hello'
+};
+
+const obj = {
+  foo: 'world',
+  find() {
+    return super.foo;
+  }
+};
+
+Object.setPrototypeOf(obj, proto);
+obj.find() // "hello"
+```
+
+上面代码中，对象`obj.find()`方法之中，通过`super.foo`引用了原型对象`proto`的`foo`属性。
+
+::: warning 注意
+`super`关键字表示原型对象时，只能用在对象的方法之中，用在其他地方都会报错。
+:::
+
+```js
+// 报错
+const obj = {
+  foo: super.foo
+}
+
+// 报错
+const obj = {
+  foo: () => super.foo
+}
+
+// 报错
+const obj = {
+  foo: function () {
+    return super.foo
+  }
+}
+```
+
+上面三种`super`的用法都会报错，因为对于 `JavaScript` 引擎来说，这里的super都没有用在对象的方法之中。第一种写法是super用在属性里面，第二种和第三种写法是super用在一个函数里面，然后赋值给foo属性。目前，只有对象方法的简写法可以让 `JavaScript` 引擎确认，定义的是对象的方法。
+
+`JavaScript` 引擎内部，`super.foo`等同于`Object.getPrototypeOf(this).foo`（属性）或`Object.getPrototypeOf(this).foo.call(this)`（方法）。
+
+
+## 9.7、对象的扩展运算符
+
+目前，ES7有一个 [提案](https://github.com/sebmarkbage/ecmascript-rest-spread)，将Rest运算符（解构赋值）/扩展运算符（...）引入对象。Babel转码器已经支持这项功能。
+
+#### （1）解构赋值
+
+对象的解构赋值用于从一个对象取值，相当于将所有可遍历的、但尚未被读取的属性，分配到指定的对象上面。所有的键和它们的值，都会拷贝到新对象上面。
+
+```js
+let { x, y, ...z } = { x: 1, y: 2, a: 3, b: 4 };
+x // 1
+y // 2
+z // { a: 3, b: 4 }
+```
+上面代码中，变量z是解构赋值所在的对象。它获取等号右边的所有尚未读取的键（a和b），将它们连同值一起拷贝过来。
+
+由于解构赋值要求等号右边是一个对象，所以如果等号右边是undefined或null，就会报错，因为它们无法转为对象。
+
+```js
+let { x, y, ...z } = null; // 运行时错误
+let { x, y, ...z } = undefined; // 运行时错误
+```
+
+解构赋值必须是最后一个参数，否则会报错。
+
+```js
+let { ...x, y, z } = obj; // 句法错误
+let { x, ...y, ...z } = obj; // 句法错误
+```
+
+上面代码中，解构赋值不是最后一个参数，所以会报错。
+
+::: warning 注意
+解构赋值的拷贝是浅拷贝，即如果一个键的值是复合类型的值（数组、对象、函数）、那么解构赋值拷贝的是这个值的引用，而不是这个值的副本。
+:::
+
+```js
+let obj = { a: { b: 1 } };
+let { ...x } = obj;
+obj.a.b = 2;
+x.a.b // 2
+```
+
+上面代码中，x是解构赋值所在的对象，拷贝了对象obj的a属性。a属性引用了一个对象，修改这个对象的值，会影响到解构赋值对它的引用。
+
+另外，解构赋值不会拷贝继承自原型对象的属性。
+
+```js
+let o1 = { a: 1 };
+let o2 = { b: 2 };
+o2.__proto__ = o1;
+let o3 = { ...o2 };
+o3 // { b: 2 }
+```
+
+上面代码中，对象o3是o2的拷贝，但是只复制了o2自身的属性，没有复制它的原型对象o1的属性。
+
+下面是另一个例子。
+
+```js
+var o = Object.create({ x: 1, y: 2 });
+o.z = 3;
+
+let { x, ...{ y, z } } = o;
+x // 1
+y // undefined
+z // 3
+```
+
+上面代码中，变量x是单纯的解构赋值，所以可以读取继承的属性；解构赋值产生的变量y和z，只能读取对象自身的属性，所以只有变量z可以赋值成功。
+
+解构赋值的一个用处，是扩展某个函数的参数，引入其他操作。
+
+```js
+function baseFunction({ a, b }) {
+  // ...
+}
+function wrapperFunction({ x, y, ...restConfig }) {
+  // 使用x和y参数进行操作
+  // 其余参数传给原始函数
+  return baseFunction(restConfig);
+}
+```
+
+上面代码中，原始函数`baseFunction`接受a和b作为参数，函数`wrapperFunction`在`baseFunction`的基础上进行了扩展，能够接受多余的参数，并且保留原始函数的行为。
+
+#### （2）扩展运算符
+
+扩展运算符（...）用于取出参数对象的所有可遍历属性，拷贝到当前对象之中。
+
+```js
+let z = { a: 3, b: 4 };
+let n = { ...z };
+n // { a: 3, b: 4 }
+```
+
+这等同于使用Object.assign方法。
+
+```js
+let aClone = { ...a };
+// 等同于
+let aClone = Object.assign({}, a);
+```
+
+扩展运算符可以用于合并两个对象。
+
+```js
+let ab = { ...a, ...b };
+// 等同于
+let ab = Object.assign({}, a, b);
+```
+
+如果用户自定义的属性，放在扩展运算符后面，则扩展运算符内部的同名属性会被覆盖掉。
+
+```js
+let aWithOverrides = { ...a, x: 1, y: 2 };
+// 等同于
+let aWithOverrides = { ...a, ...{ x: 1, y: 2 } };
+// 等同于
+let x = 1, y = 2, aWithOverrides = { ...a, x, y };
+// 等同于
+let aWithOverrides = Object.assign({}, a, { x: 1, y: 2 });
+```
+上面代码中，a对象的x属性和y属性，拷贝到新对象后会被覆盖掉。
+
+这用来修改现有对象部分的部分属性就很方便了。
+
+```js
+let newVersion = {
+  ...previousVersion,
+  name: 'New Name' // Override the name property
+};
+```
+上面代码中，newVersion对象自定义了name属性，其他属性全部复制自previousVersion对象。
+
+如果把自定义属性放在扩展运算符前面，就变成了设置新对象的默认属性值。
+
+```js
+let aWithDefaults = { x: 1, y: 2, ...a };
+// 等同于
+let aWithDefaults = Object.assign({}, { x: 1, y: 2 }, a);
+// 等同于
+let aWithDefaults = Object.assign({ x: 1, y: 2 }, a);
+```
+扩展运算符的参数对象之中，如果有取值函数get，这个函数是会执行的。
+
+```js
+// 并不会抛出错误，因为x属性只是被定义，但没执行
+let aWithXGetter = {
+  ...a,
+  get x() {
+    throws new Error('not thrown yet');
+  }
+};
+
+```
+```js
+// 会抛出错误，因为x属性被执行了
+let runtimeError = {
+  ...a,
+  ...{
+    get x() {
+      throws new Error('thrown now');
     }
-    // 针对NaN的情况
-    return x !== x && y !== y;
-  },
-  configurable: true,
-  enumerable: false,
-  writable: true
-});
-```
-## 9.5 Object.assign()
-
-### 9.5.1 基本用法
-
-`Object.assign`方法用于对象的合并，将源对象（source）的所有可枚举属性，复制到目标对象（target）。
-
-```js
-var target = { a: 1 };
-
-var source1 = { b: 2 };
-var source2 = { c: 3 };
-
-Object.assign(target, source1, source2);
-target // {a:1, b:2, c:3}
-```
-
-`Object.assign`方法的第一个参数是目标对象，后面的参数都是源对象
-
-:::warning 注意
-如果目标对象与源对象有同名属性，或多个源对象有同名属性，则后面的属性会覆盖前面的属性。
-:::
-
-```js
-var target = { a: 1, b: 1 };
-
-var source1 = { b: 2, c: 2 };
-var source2 = { c: 3 };
-
-Object.assign(target, source1, source2);
-target // {a:1, b:2, c:3}
-```
-
-如果只有一个参数，`Object.assign`会直接返回该参数。
-
-```js
-var obj = {a: 1};
-Object.assign(obj) === obj // true
-```
-
-如果该参数不是对象，则会先转成对象，然后返回。
-
-```js
-typeof Object.assign(2) // "object"
-```
-
-由于`undefined`和`null`无法转成对象，所以如果它们作为参数，就会报错。
-
-```js
-Object.assign(undefined) // 报错
-Object.assign(null) // 报错
-```
-
-如果非对象参数出现在源对象的位置（即非首参数），那么处理规则有所不同。首先，这些参数都会转成对象，如果无法转成对象，就会跳过。这意味着，如果`undefined`和`null`不在首参数，就不会报错。
-
-```js
-let obj = {a: 1};
-Object.assign(obj, undefined) === obj // true
-Object.assign(obj, null) === obj // true
-```
-
-其他类型的值（即数值、字符串和布尔值）不在首参数，也不会报错。但是，除了字符串会以数组形式，拷贝入目标对象，其他值都不会产生效果。
-
-```js
-var v1 = 'abc';
-var v2 = true;
-var v3 = 10;
-
-var obj = Object.assign({}, v1, v2, v3);
-console.log(obj); // { "0": "a", "1": "b", "2": "c" }
-```
-上面代码中，`v1`、`v2`、`v3`分别是字符串、布尔值和数值，结果只有字符串合入目标对象（以字符数组的形式），数值和布尔值都会被忽略。这是因为只有字符串的包装对象，会产生可枚举属性。
-
-```js
-Object(true) // {[[PrimitiveValue]]: true}
-Object(10)  //  {[[PrimitiveValue]]: 10}
-Object('abc') // {0: "a", 1: "b", 2: "c", length: 3, [[PrimitiveValue]]: "abc"}
-```
-
-上面代码中，布尔值、数值、字符串分别转成对应的包装对象，可以看到它们的原始值都在包装对象的内部属性`[[PrimitiveValue]]`上面，这个属性是不会被Object.assign拷贝的。只有字符串的包装对象，会产生可枚举的实义属性，那些属性则会被拷贝。
-
-`Object.assign`拷贝的属性是有限制的，只拷贝源对象的自身属性（不拷贝继承属性），也不拷贝不可枚举的属性（enumerable: false）。
-
-```js
-Object.assign({b: 'c'},
-  Object.defineProperty({}, 'invisible', {
-    enumerable: false,
-    value: 'hello'
-  })
-)
-// { b: 'c' }
-```
-
-上面代码中，`Object.assign`要拷贝的对象只有一个不可枚举属性invisible，这个属性并没有被拷贝进去。
-
-属性名为Symbol值的属性，也会被`Object.assign`拷贝。
-
-```js
-Object.assign({ a: 'b' }, { [Symbol('c')]: 'd' })
-// { a: 'b', Symbol(c): 'd' }
-```
-
-### 9.5.2 注意点
-
-`Object.assign`方法实行的是浅拷贝，而不是深拷贝。也就是说，如果源对象某个属性的值是对象，那么目标对象拷贝得到的是这个对象的引用。
-
-```js
-var obj1 = {a: {b: 1}};
-var obj2 = Object.assign({}, obj1);
-
-obj1.a.b = 2;
-obj2.a.b // 2
-```
-
-上面代码中，源对象`obj1`的`a`属性的值是一个对象，`Object.assign`拷贝得到的是这个对象的引用。这个对象的任何变化，都会反映到目标对象上面。
-
-对于这种嵌套的对象，一旦遇到同名属性，`Object.assign`的处理方法是替换，而不是添加。
-
-```js
-var target = { a: { b: 'c', d: 'e' } }
-var source = { a: { b: 'hello' } }
-Object.assign(target, source)
-// { a: { b: 'hello' } }
-```
-
-上面代码中，`target`对象的a属性被`source`对象的a属性整个替换掉了，而不会得到`{ a: { b: 'hello', d: 'e' } }`的结果。这通常不是开发者想要的，需要特别小心。
-
-有一些函数库提供`Object.assign`的定制版本（比如Lodash的_.defaultsDeep方法），可以解决浅拷贝的问题，得到深拷贝的合并。
-
-:::waring 注意
-`Object.assign`可以用来处理数组，但是会把数组视为对象。
-:::
-
-```js
-Object.assign([1, 2, 3], [4, 5])
-// [4, 5, 3]
-```
-
-上面代码中，`Object.assign`把数组视为属性名为0、1、2的对象，因此目标数组的0号属性4覆盖了原数组的0号属性1。
-
-### 9.5.3 常见用途
-
-`Object.assign`方法有很多用处。
-
-#### (1) 为对象添加属性
-
-```js
-class Point {
-  constructor(x, y) {
-    Object.assign(this, {x, y});
   }
-}
-```
-
-上面方法通过`Object.assign`方法，将x属性和y属性添加到Point类的对象实例。
-
-#### （2）为对象添加方法
-
-```js
-Object.assign(SomeClass.prototype, {
-  someMethod(arg1, arg2) {
-    ···
-  },
-  anotherMethod() {
-    ···
-  }
-});
-
-// 等同于下面的写法
-SomeClass.prototype.someMethod = function (arg1, arg2) {
-  ···
-};
-SomeClass.prototype.anotherMethod = function () {
-  ···
 };
 ```
-
-上面代码使用了对象属性的简洁表示法，直接将两个函数放在大括号中，再使用`assign`方法添加到`SomeClass.prototype`之中。
-
-#### （3）克隆对象
+如果扩展运算符的参数是`null`或`undefined`，这个两个值会被忽略，不会报错。
 
 ```js
-function clone(origin) {
-  return Object.assign({}, origin);
-}
+let emptyObject = { ...null, ...undefined }; // 不报错
 ```
-
-上面代码将原始对象拷贝到一个空对象，就得到了原始对象的克隆。
-
-不过，采用这种方法克隆，只能克隆原始对象自身的值，不能克隆它继承的值。如果想要保持继承链，可以采用下面的代码。
-
-```js
-function clone(origin) {
-  let originProto = Object.getPrototypeOf(origin);
-  return Object.assign(Object.create(originProto), origin);
-}
-```
-
-#### （4）合并多个对象
-
-将多个对象合并到某个对象。
-
-```js
-const merge =
-  (target, ...sources) => Object.assign(target, ...sources);
-```
-
-如果希望合并后返回一个新对象，可以改写上面函数，对一个空对象合并。
-
-```js
-const merge =
-  (...sources) => Object.assign({}, ...sources);
-```
-
-#### （5）为属性指定默认值
-
-```js
-const DEFAULTS = {
-  logLevel: 0,
-  outputFormat: 'html'
-};
-
-function processContent(options) {
-  options = Object.assign({}, DEFAULTS, options);
-}
-```
-
-上面代码中，DEFAULTS对象是默认值，options对象是用户提供的参数。Object.assign方法将DEFAULTS和options合并成一个新对象，如果两者有同名属性，则option的属性值会覆盖DEFAULTS的属性值。
-
-:::waring zhuyi
-由于存在深拷贝的问题，DEFAULTS对象和options对象的所有属性的值，都只能是简单类型，而不能指向另一个对象。否则，将导致DEFAULTS对象的该属性不起作用。
-:::
-
-## 9.6 属性的可枚举性
-## 9.7 属性的遍历
-## 9.8 __proto__ 属性、Object.setPrototypeOf()、Object.getPrototypeOf()
-### 9.8.1 __proto__ 属性
-### 9.8.2 Object.setPrototypeOf() 
-### 9.8.3 Object.getPrototypeOf() 
-## 9.9 Object.keys()、Object.values()、Object.entries()
-### 9.9.1 Object.keys()
-### 9.9.2 Object.values()
-### 9.9.3 Object.entries
-## 9.10 对象的扩展运算符
-## 9.11 Object.getOwnPropertyDescriptors() 
-## 9.12 Null 传导运算得

@@ -12,7 +12,11 @@ module.exports = {
         '/guide/ecma/numerical.md',
         '/guide/ecma/function.md',
         '/guide/ecma/array.md',
-        '/guide/ecma/object.md'
+        '/guide/ecma/object.md',
+        '/guide/ecma/object-methods.md',
+        '/guide/ecma/operator.md',
+        '/guide/ecma/symbol.md',
+        '/guide/ecma/set-map.md'
       ]
   }],
   '/engineering/':[{
