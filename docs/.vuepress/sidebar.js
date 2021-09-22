@@ -16,7 +16,8 @@ module.exports = {
         '/guide/ecma/object-methods.md',
         '/guide/ecma/operator.md',
         '/guide/ecma/symbol.md',
-        '/guide/ecma/set-map.md'
+        '/guide/ecma/set-map.md',
+        '/guide/ecma/proxy.md'
       ]
   }],
   '/engineering/':[{
